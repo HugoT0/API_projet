@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+
+
+{% block body %}
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Tag finder</title>
+    </head>
+
+    <body>
+        <form name="form", method="POST", style="text-align: center;">
+            <br>
+            Title: <input type="text" name="title", placeholder="Enter your title" required/>
+            <br><br>
+            Question: <input type="text" name="question", placeholder="Enter your question" required/>
+            <br><br>
+            <button value="Submit">Run</button>
+        </form>
+        <p style="text-align: center;">{{ output }}</p>
+    </body>
+</html>
+
+{% endblock %}
