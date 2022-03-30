@@ -105,21 +105,27 @@ def main(features):
 
             # Get prediction
             proba = clf.predict_proba(X)[0]
-            #prediction = le.classes_[clf.predict(X)[0]]
+            tags = le.classes_
+            proba_df = pd.DataFrame({'proba':proba,'tags':tags})
 
-            sorted_index_array = np.argsort(proba)
+            #sorted_index_array = np.argsort(proba)
+            #sorted_proba = proba[sorted_index_array]
 
             # sorted array
-            sorted_array = proba[sorted_index_array]
+            #sorted_array = proba[sorted_index_array]
 
-            # we want 2 largest value
-            #n = 2
+            #prediction = [le.classes_[sorted_index_array[-1]],le.classes_[sorted_index_array[-2]]]
 
-            #rslt = sorted_array[-n : ]
+            # Graph output
 
-            prediction = [le.classes_[sorted_index_array[-1]],le.classes_[sorted_index_array[-2]]]
+            fig = Figure()
+            axis = fig.add_subplot(1, 1, 1)
+            sns.barplot(ax=axis, x=proba_df.sort_values(by=['proba'], ascending=False)['tags'][:3],
+             y=proba_df.sort_values(by=['proba'], ascending=False)['proba'][:3])
+            output = io.BytesIO()
+            FigureCanvas(fig).print_png(output)
 
-            return render_template("index.html", output = prediction)
+            return Response(output.getvalue(), mimetype='image/png')
 
 
     except ValueError:
