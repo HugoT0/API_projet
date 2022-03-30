@@ -3,6 +3,7 @@ import re
 import joblib
 from sklearn import preprocessing
 from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.pipeline import Pipeline
 
 ## Import data ##
 data_features = pd.read_csv('bag_of_words.csv')
@@ -31,13 +32,15 @@ columns = ['level_0'])
 scaler = preprocessing.StandardScaler()
 label_encoder = preprocessing.LabelEncoder()
 
-data_wo_tags = data_main.drop(columns = ['tag'])
+X = data_main.drop(columns = ['tag'])
 
-X = scaler.fit_transform(data_wo_tags)
+#X = scaler.fit_transform(data_wo_tags)
 y = label_encoder.fit_transform(data_main['tag'])
 
 ## Learning ##
-clf = GradientBoostingClassifier(n_estimators = 300)
+#clf = GradientBoostingClassifier(n_estimators = 300)
+gb = GradientBoostingClassifier(n_estimators = 300)
+clf = Pipeline([('scaler', scaler), ('gradboost', gb)])
 clf.fit(X, y)
 
 ## Saving the model ##
