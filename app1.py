@@ -2,22 +2,17 @@ from flask import Flask, request, render_template
 import joblib
 import nltk
 import re
-import io
-import pandas as pd
 import numpy as np
-import seaborn as sns
+import pandas as pd
 from bs4 import BeautifulSoup
 from sklearn.feature_extraction.text import CountVectorizer
 from nltk.stem import WordNetLemmatizer
-from flask import Response
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from matplotlib.figure import Figure
 
 app = Flask(__name__)
 
 ## List of words we need ##
 #nltk.download('stopwords')
-#nltk.download('omw-1.4')
+nltk.download('omw-1.4')
 stopwords = ['i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'ourselves', 'you', "you're", "you've", "you'll", "you'd", 'your', 'yours', 'yourself', 'yourselves', 'he', 'him', 'his', 'himself', 'she', "she's", 'her', 'hers', 'herself', 'it', "it's", 'its', 'itself', 'they', 'them', 'their', 'theirs', 'themselves', 'what', 'which', 'who', 'whom', 'this', 'that', "that'll", 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'a', 'an', 'the', 'and', 'but', 'if', 'or', 'because', 'as', 'until', 'while', 'of', 'at', 'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before', 'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over', 'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just', 'don', "don't", 'should', "should've", 'now', 'd', 'll', 'm', 'o', 're', 've', 'y', 'ain', 'aren', "aren't", 'couldn', "couldn't", 'didn', "didn't", 'doesn', "doesn't", 'hadn', "hadn't", 'hasn', "hasn't", 'haven', "haven't", 'isn', "isn't", 'ma', 'mightn', "mightn't", 'mustn', "mustn't", 'needn', "needn't", 'shan', "shan't", 'shouldn', "shouldn't", 'wasn', "wasn't", 'weren', "weren't", 'won', "won't", 'wouldn', "wouldn't"]
 
 blacklist_vocab = ['able','also', 'another', 'anyone','based', 'cannot','could','else',
@@ -73,68 +68,46 @@ def message_to_words_v2(raw_title, raw_text):
     return( " ".join(lemmat_text))
 
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+@app.route('/', methods=['GET', 'POST'])
+def main():
 
-@app.route('/<features>', methods=['GET'])
-def main(features):
+    # If a form is submitted
+    if request.method == "POST":
 
-    try:
-        parsed_features = [feature.strip() for feature in features.split(',')]
+        # Unpickle classifier and labelencoder
+        clf = joblib.load("clf.pkl")
+        le = joblib.load("le.pkl")
 
-        if (len(parsed_features)==1) or (len(parsed_features)>2):
-            prediction = "Wrong number of inputs"
-
-            return render_template("index.html", output = prediction)
-
-        else:
-
-            # Unpickle classifier
-            clf = joblib.load("clf.pkl")
-            le = joblib.load("le.pkl")
-
-            # Get values through input bars
-            title = parsed_features[0]
-            body = parsed_features[1]
-
-
-            # Put inputs to dataframe
-            X = vectorizer.fit_transform([message_to_words_v2(title, body)]).toarray()
-            #pd.DataFrame([[height, weight]], columns = ["Height", "Weight"])
-
-            # Get prediction
-            proba = clf.predict_proba(X)[0]
-            #prediction = le.classes_[clf.predict(X)[0]]
-
-            sorted_index_array = np.argsort(proba)
-
-            # sorted array
-            sorted_array = proba[sorted_index_array]
-
-            # we want 2 largest value
-            #n = 2
-
-            #rslt = sorted_array[-n : ]
-
-            prediction = [le.classes_[sorted_index_array[-1]],le.classes_[sorted_index_array[-2]]]
-
-            return render_template("index.html", output = prediction)
-
-
-    except ValueError:
-        # something went wrong to return bad request
-
-        return make_response('Unsupported request, probably feature names are wrong', 400)
+        # Get values through input bars
+        title = request.form.get("title")
+        body = request.form.get("question")
 
 
 
+        # Put inputs to dataframe
+        X = vectorizer.fit_transform([message_to_words_v2(title, body)]).toarray()
+        #pd.DataFrame([[height, weight]], columns = ["Height", "Weight"])
 
+        # Get prediction
+        proba = clf.predict_proba(X)[0]
+        #prediction = le.classes_[clf.predict(X)[0]]
 
+        sorted_index_array = np.argsort(proba)
 
+        # sorted array
+        sorted_array = proba[sorted_index_array]
 
+        # we want 2 largest value
+        #n = 2
 
+        #rslt = sorted_array[-n : ]
 
+        prediction = [le.classes_[sorted_index_array[-1]],le.classes_[sorted_index_array[-2]]]
+
+    else:
+        prediction = ""
+
+    return render_template("website.html", output = prediction)
 
 if __name__ == "__main__":
     app.run(debug=True)
